@@ -1,26 +1,30 @@
-// Supabase Configuration & Singleton Initialization
-// Uses window-scoped singleton to prevent duplicate initialization errors
-(function () {
+// ==========================================
+// Supabase Client Initialization (Singleton)
+// ==========================================
+// IMPORTANT: The CDN creates a global `window.supabase` (the library).
+// We use `supabaseClient` to avoid naming collision.
+
+(function initSupabase() {
     if (!window._supabaseClient) {
-        const SUPABASE_URL = 'https://ddrjlkchvlbpvfsleokd.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcmpsa2NodmxicHZmc2xlb2tkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNDU0MzgsImV4cCI6MjA4MjkyMTQzOH0.V-oaKw5Ejrwxg-xbtA2bof2ZPTamRkmhBECbHjWXN5U';
+        var SUPABASE_URL = 'https://ddrjlkchvlbpvfsleokd.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcmpsa2NodmxicHZmc2xlb2tkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNDU0MzgsImV4cCI6MjA4MjkyMTQzOH0.V-oaKw5Ejrwxg-xbtA2bof2ZPTamRkmhBECbHjWXN5U';
         window._supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 })();
 
-// Get the singleton client
-const supabase = window._supabaseClient;
+// Reference to the singleton client (safe name, no collision)
+var supabaseClient = window._supabaseClient;
 
 // ==========================================
 // Job Form Handler (post-job.html)
 // ==========================================
 document.addEventListener('DOMContentLoaded', function () {
-    const jobForm = document.getElementById('jobForm');
+    var jobForm = document.getElementById('jobForm');
 
     if (jobForm) {
-        const successMessage = document.getElementById('successMessage');
-        const errorMessage = document.getElementById('errorMessage');
-        const submitBtn = jobForm.querySelector('button[type="submit"]');
+        var successMessage = document.getElementById('successMessage');
+        var errorMessage = document.getElementById('errorMessage');
+        var submitBtn = jobForm.querySelector('button[type="submit"]');
 
         jobForm.addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -34,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
             submitBtn.textContent = 'Posting...';
 
             // Create job object matching Supabase table columns
-            const jobData = {
+            var jobData = {
                 school_name: document.getElementById('schoolName').value.trim(),
                 job_title: document.getElementById('jobTitle').value.trim(),
                 subject: document.getElementById('subject').value.trim(),
@@ -46,12 +50,12 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             try {
-                const { data, error } = await supabase
+                var result = await supabaseClient
                     .from('jobs')
                     .insert([jobData]);
 
-                if (error) {
-                    throw error;
+                if (result.error) {
+                    throw result.error;
                 }
 
                 // Show success message
@@ -80,9 +84,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ==========================================
     // Job Listings Handler (jobs.html)
     // ==========================================
-    const jobListings = document.getElementById('jobListings');
-    const filterBtn = document.getElementById('filterBtn');
-    const cityFilter = document.getElementById('cityFilter');
+    var jobListings = document.getElementById('jobListings');
+    var filterBtn = document.getElementById('filterBtn');
+    var cityFilter = document.getElementById('cityFilter');
 
     if (jobListings) {
         // Initial render of all jobs
@@ -102,13 +106,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function renderJobs(filterCity) {
-        const jobListings = document.getElementById('jobListings');
+        var jobListingsEl = document.getElementById('jobListings');
 
         // Show loading state
-        jobListings.innerHTML = '<div class="empty-state">Loading jobs...</div>';
+        jobListingsEl.innerHTML = '<div class="empty-state">Loading jobs...</div>';
 
         try {
-            let query = supabase
+            var query = supabaseClient
                 .from('jobs')
                 .select('*')
                 .order('created_at', { ascending: false });
@@ -118,50 +122,49 @@ document.addEventListener('DOMContentLoaded', function () {
                 query = query.ilike('city', filterCity);
             }
 
-            const { data: jobs, error } = await query;
+            var result = await query;
 
-            if (error) {
-                throw error;
+            if (result.error) {
+                throw result.error;
             }
+
+            var jobs = result.data;
 
             // Check for empty state
             if (!jobs || jobs.length === 0) {
-                jobListings.innerHTML = '<div class="empty-state">No jobs posted yet</div>';
+                jobListingsEl.innerHTML = '<div class="empty-state">No jobs posted yet</div>';
                 return;
             }
 
             // Render job cards
-            let html = '';
-            jobs.forEach(function (job) {
-                html += `
-                    <div class="job-card">
-                        <h3>${escapeHtml(job.job_title)}</h3>
-                        <div class="school-name">${escapeHtml(job.school_name)}</div>
-                        <div class="job-details">
-                            <span><strong>Subject:</strong> ${escapeHtml(job.subject)}</span>
-                            <span><strong>Location:</strong> ${escapeHtml(job.city)}, ${escapeHtml(job.state)}</span>
-                        </div>
-                        <div class="job-type">${escapeHtml(job.job_type)}</div>
-                        <div>
-                            <a href="mailto:${escapeHtml(job.email)}" class="contact-email">${escapeHtml(job.email)}</a>
-                        </div>
-                        <div class="job-description">${escapeHtml(job.description)}</div>
-                    </div>
-                `;
-            });
+            var html = '';
+            for (var i = 0; i < jobs.length; i++) {
+                var job = jobs[i];
+                html += '<div class="job-card">';
+                html += '<h3>' + escapeHtml(job.job_title) + '</h3>';
+                html += '<div class="school-name">' + escapeHtml(job.school_name) + '</div>';
+                html += '<div class="job-details">';
+                html += '<span><strong>Subject:</strong> ' + escapeHtml(job.subject) + '</span>';
+                html += '<span><strong>Location:</strong> ' + escapeHtml(job.city) + ', ' + escapeHtml(job.state) + '</span>';
+                html += '</div>';
+                html += '<div class="job-type">' + escapeHtml(job.job_type) + '</div>';
+                html += '<div><a href="mailto:' + escapeHtml(job.email) + '" class="contact-email">' + escapeHtml(job.email) + '</a></div>';
+                html += '<div class="job-description">' + escapeHtml(job.description) + '</div>';
+                html += '</div>';
+            }
 
-            jobListings.innerHTML = html;
+            jobListingsEl.innerHTML = html;
 
         } catch (error) {
             console.error('Error fetching jobs:', error);
-            jobListings.innerHTML = '<div class="empty-state">Failed to load jobs. Please refresh the page.</div>';
+            jobListingsEl.innerHTML = '<div class="empty-state">Failed to load jobs. Please refresh the page.</div>';
         }
     }
 
     // Helper function to escape HTML and prevent XSS
     function escapeHtml(text) {
         if (!text) return '';
-        const div = document.createElement('div');
+        var div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
