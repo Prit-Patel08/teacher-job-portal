@@ -1,9 +1,15 @@
-// Supabase Configuration
-const SUPABASE_URL = 'https://ddrjlkchvlbpvfsleokd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcmpsa2NodmxicHZmc2xlb2tkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNDU0MzgsImV4cCI6MjA4MjkyMTQzOH0.V-oaKw5Ejrwxg-xbtA2bof2ZPTamRkmhBECbHjWXN5U';
+// Supabase Configuration & Singleton Initialization
+// Uses window-scoped singleton to prevent duplicate initialization errors
+(function () {
+    if (!window._supabaseClient) {
+        const SUPABASE_URL = 'https://ddrjlkchvlbpvfsleokd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkcmpsa2NodmxicHZmc2xlb2tkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNDU0MzgsImV4cCI6MjA4MjkyMTQzOH0.V-oaKw5Ejrwxg-xbtA2bof2ZPTamRkmhBECbHjWXN5U';
+        window._supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+})();
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Get the singleton client
+const supabase = window._supabaseClient;
 
 // ==========================================
 // Job Form Handler (post-job.html)
